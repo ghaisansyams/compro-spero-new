@@ -83,3 +83,22 @@
 .work-group-head h3{font-size:clamp(22px,2.2vw,30px)}
 .work-group-head p{font-size:13px;color:var(--muted)}
 .work-group:first-child .work-group-head{border-top:0;padding-top:0}
+
+/* ---------- About: team + contact ---------- */
+.about-since{font-size:13px!important;font-weight:600;letter-spacing:.08em;color:var(--foreground)!important;margin-top:36px}
+.about-statement .large-prose h2.accent-text{font-size:clamp(44px,6vw,88px);letter-spacing:-.05em;margin-bottom:28px}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.team-card{border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:32px 20px 28px;text-align:center;transition:transform .3s var(--ease),border-color .24s}
+.team-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.team-card img{width:128px;height:128px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 20px;border:3px solid var(--background);box-shadow:0 0 0 1px var(--line)}
+.team-card h3{font-size:17px;color:var(--accent)}
+.team-card p{margin-top:6px;font-size:12px;color:var(--muted)}
+.about-contact{background:var(--background)}
+.contact-list{margin:0;display:grid;gap:0}
+.contact-list>div{display:grid;grid-template-columns:120px 1fr;gap:24px;padding:22px 0;border-top:1px solid var(--line)}
+.contact-list>div:last-child{border-bottom:1px solid var(--line)}
+.contact-list dt{font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:650;color:var(--muted)}
+.contact-list dd{margin:0;font-size:15px;line-height:1.8}
+.contact-list a:hover{color:var(--accent)}
+@media (max-width:1100px){.team-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:760px){.team-grid{grid-template-columns:repeat(2,1fr);gap:14px}.contact-list>div{grid-template-columns:1fr;gap:6px}}
