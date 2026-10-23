@@ -1,0 +1,14 @@
+/* Tambahan untuk versi statis */
+.brand-descriptor{display:none!important}
+.marquee-track{animation:marq 45s linear infinite;will-change:transform}
+.marquee-row[data-direction=rtl] .marquee-track{animation-direction:reverse}
+@keyframes marq{to{transform:translateX(-50%)}}
+.project-list .project-feature{margin-bottom:64px}
+.project-list .project-preview img{aspect-ratio:16/10;object-fit:cover}
+.project-sub{margin:16px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted)}
+.project-sub li{border-top:1px solid var(--line);padding:9px 0}
+.project-summary .project-stack b{font-weight:600;color:var(--foreground)}
+.clients{border-top:1px solid var(--line);padding-block:72px}
+.client-list{display:flex;flex-wrap:wrap;gap:10px;margin:32px 0 0;padding:0;list-style:none}
+.client-list li{border:1px solid var(--line);border-radius:3px;padding:10px 14px;font-size:13px;font-weight:550;transition:border-color .24s,color .24s}
+.client-list li:hover{border-color:var(--accent);color:var(--accent)}
