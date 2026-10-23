@@ -12,3 +12,69 @@
 .client-list{display:flex;flex-wrap:wrap;gap:10px;margin:32px 0 0;padding:0;list-style:none}
 .client-list li{border:1px solid var(--line);border-radius:3px;padding:10px 14px;font-size:13px;font-weight:550;transition:border-color .24s,color .24s}
 .client-list li:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- Work rail (sideways scroll) ---------- */
+.work-section{padding-bottom:88px}
+.work-rail-wrap{position:relative}
+.work-controls{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.work-hint{font-size:12px;color:var(--muted)}
+.work-nav{display:flex;align-items:center;gap:6px}
+.work-counter{font-size:12px;font-weight:600;letter-spacing:.08em;margin-right:10px;font-variant-numeric:tabular-nums}
+.work-btn{border:1px solid var(--line);font-size:18px}
+.work-btn:hover{border-color:var(--accent);color:var(--accent)}
+.work-rail{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:6px 0 20px;cursor:grab;overscroll-behavior-x:contain;outline-offset:6px}
+.work-rail::-webkit-scrollbar{display:none}
+.work-rail.is-drag{scroll-snap-type:none;cursor:grabbing;user-select:none}
+.work-slide{flex:0 0 min(88vw,520px);scroll-snap-align:start;display:flex;flex-direction:column;border:1px solid var(--line);border-top:3px solid var(--c,var(--accent));border-radius:4px;background:var(--surface);opacity:.55;transform:scale(.97);transform-origin:left center;transition:opacity .5s var(--ease),transform .5s var(--ease),border-color .24s}
+.work-slide.is-active{opacity:1;transform:none}
+.work-slide:hover{opacity:1}
+.work-shot{position:relative;display:block;width:100%;padding:0;border:0;background:var(--background);cursor:zoom-in;overflow:hidden;text-align:left}
+.work-bar{display:flex;gap:6px;padding:9px 12px;background:color-mix(in oklab,var(--foreground) 7%,var(--background));border-bottom:1px solid var(--line)}
+.work-bar i{width:8px;height:8px;border-radius:50%;background:color-mix(in oklab,var(--foreground) 22%,transparent)}
+.work-shot img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;transition:transform .7s var(--ease);-webkit-user-drag:none}
+.work-shot:hover img{transform:scale(1.03)}
+.work-count{position:absolute;right:10px;bottom:10px;padding:4px 9px;border-radius:99px;background:color-mix(in oklab,var(--background) 86%,transparent);backdrop-filter:blur(6px);font-size:11px;font-weight:600;border:1px solid var(--line)}
+.work-count:after{content:" screens"}
+.work-body{display:flex;flex-direction:column;flex:1;padding:22px 22px 24px}
+.work-body h3{margin-top:14px;font-size:24px}
+.work-sub{margin-top:4px;font-size:13px;font-weight:600;color:var(--c,var(--accent))}
+.work-desc{margin-top:12px;font-size:14px;line-height:1.75;color:var(--muted);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.work-chips{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0;padding:0;list-style:none}
+.work-chips li{border:1px solid var(--line);border-radius:3px;padding:4px 9px;font-size:11px;font-weight:550}
+.work-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:20px 0 0;padding:14px 0;border-block:1px solid var(--line)}
+.work-stats dt{font-size:17px;font-weight:650;letter-spacing:-.02em}
+.work-stats dd{margin:2px 0 0;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.work-actions{display:flex;flex-wrap:wrap;align-items:center;gap:22px;margin-top:auto;padding-top:22px}
+.work-tag{border:1px solid var(--line);border-radius:3px;padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted)}
+.work-progress{height:2px;background:var(--line);margin-top:4px}
+.work-progress span{display:block;height:100%;background:var(--accent);transform-origin:0;transform:scaleX(.1);transition:transform .25s}
+.work-more{display:flex;justify-content:center;margin-top:44px}
+/* show all */
+.work-all{margin-top:72px;padding-top:40px;border-top:1px solid var(--line)}
+.work-all[hidden]{display:none}
+.work-all-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;margin-bottom:32px}
+.work-all-head h2 span{color:var(--muted);font-weight:450}
+.work-pills{display:flex;flex-wrap:wrap;gap:8px}
+.work-pill{border:1px solid var(--line);background:none;color:var(--foreground);border-radius:99px;padding:9px 16px;font:600 12px/1 inherit;font-family:inherit;cursor:pointer;transition:all .24s}
+.work-pill:hover{border-color:var(--accent);color:var(--accent)}
+.work-pill.is-on{background:var(--foreground);border-color:var(--foreground);color:var(--background)}
+.work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.work-card{display:flex;flex-direction:column;border:1px solid var(--line);border-top:3px solid var(--c,var(--accent));border-radius:4px;background:var(--surface);overflow:hidden;transition:transform .3s var(--ease),border-color .24s}
+.work-card[hidden]{display:none}
+.work-card:hover{transform:translateY(-4px);border-color:var(--c,var(--accent))}
+.work-card .work-body{padding:18px 18px 20px}
+.work-card h3{margin-top:0;font-size:19px}
+.work-card .work-desc{-webkit-line-clamp:3;font-size:13px}
+.work-card .text-link{margin-top:16px;align-self:flex-start}
+/* lightbox */
+.lightbox{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:color-mix(in oklab,#06121c 92%,transparent);padding:48px 72px}
+.lightbox[hidden]{display:none}
+.lightbox figure{margin:0;max-width:min(1200px,100%);max-height:100%;display:flex;flex-direction:column;gap:14px}
+.lightbox img{max-width:100%;max-height:calc(100vh - 150px);object-fit:contain;border-radius:3px;background:#fff}
+.lightbox figcaption{color:#c4d8e6;font-size:13px;text-align:center}
+.lb-close,.lb-nav{position:absolute;border:1px solid #ffffff33;background:#ffffff14;color:#fff;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer}
+.lb-close{top:20px;right:20px}.lb-nav{top:50%;transform:translateY(-50%)}.lb-prev{left:20px}.lb-next{right:20px}
+.lb-nav[hidden]{display:none}
+.lb-close:hover,.lb-nav:hover{background:#ffffff2b}
+@media (max-width:1100px){.work-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){.work-grid{grid-template-columns:1fr}.work-hint{display:none}.work-controls{justify-content:flex-end}.lightbox{padding:60px 16px}.lb-nav{top:auto;bottom:16px;transform:none}.work-slide{flex-basis:86vw}.work-stats dt{font-size:15px}}
