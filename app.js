@@ -30,4 +30,15 @@ root.setAttribute('data-reveal','armed');
 // svg illustrations: play when visible
 var mo=new IntersectionObserver(function(es){es.forEach(function(e){e.target.setAttribute('data-motion',e.isIntersecting?'running':'paused')})});
 $('[data-motion]').forEach(function(el){mo.observe(el)});
+// marquee: scroll-driven, rows travel in opposite directions, eased
+var rows=$('[data-marquee-row]').map(function(r){return {el:r,track:r.querySelector('.marquee-track'),dir:r.getAttribute('data-direction')==='rtl'?-1:1,speed:parseFloat(r.getAttribute('data-speed'))||1,cur:0}});
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function mq(){
+  rows.forEach(function(r){
+    var gw=r.track.firstElementChild?r.track.firstElementChild.offsetWidth:0; if(!gw)return;
+    var target=scrollY*0.45*r.speed*r.dir; r.cur+=(target-r.cur)*0.12;
+    var m=((r.cur%gw)+gw)%gw;                  // 0..gw
+    r.track.style.transform='translate3d('+(-m)+'px,0,0)'});
+  if(!still)requestAnimationFrame(mq)}
+if(rows.length&&!still)requestAnimationFrame(mq);
 })();

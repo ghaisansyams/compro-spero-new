@@ -1,8 +1,6 @@
 /* Tambahan untuk versi statis */
 .brand-descriptor{display:none!important}
-.marquee-track{animation:marq 45s linear infinite;will-change:transform}
-.marquee-row[data-direction=rtl] .marquee-track{animation-direction:reverse}
-@keyframes marq{to{transform:translateX(-50%)}}
+.marquee-track{will-change:transform}
 .project-list .project-feature{margin-bottom:64px}
 .project-list .project-preview img{aspect-ratio:16/10;object-fit:cover}
 .project-sub{margin:16px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted)}
