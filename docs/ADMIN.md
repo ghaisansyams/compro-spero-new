@@ -54,21 +54,24 @@ Section bertanda “satu per halaman” tidak bisa dobel. Section yang isinya di
 Teks bisa memakai `{email}` dan `{instagram}`; keduanya diganti otomatis dari menu Kontak. Tautan internal (`/services`) otomatis menjadi `/id/services` di versi Indonesia.
 Kalau satu bahasa dikosongkan, situs memakai versi EN.
 
-## Penyimpanan
+## Penyimpanan (PostgreSQL)
 
-| Berkas | Isi | Di git? |
-|---|---|---|
-| `data/updates.json` | semua update + status | ya |
-| `data/content.json` | semua konten CMS (halaman, portofolio, menu, situs, tema, tim, klien, kontak), masing-masing draf & tayang | ya |
-| `data/versions/` | riwayat versi tiap bagian | ya |
-| `theme.css` | dihasilkan dari menu Tema | ya (otomatis) |
-| `data/admin-users.json` | akun + hash kata sandi (scrypt) | **tidak** |
-| `data/activity.jsonl` | log aktivitas | **tidak** |
-| `.env.local` | `APIFY_TOKEN`, `SESSION_SECRET` | **tidak** |
+Semua data ada di database `compro_spero` (koneksi lewat `DATABASE_URL` di `.env.local`):
+
+| Tabel | Isi |
+|---|---|
+| `cms_content` | halaman, portofolio, menu, situs, tema, tim, klien, kontak (kolom `draft` dan `published`) |
+| `cms_versions` | riwayat versi (40 terakhir per bagian) |
+| `updates` + `cms_meta` | postingan Instagram / update manual + status terbit |
+| `admin_users` | akun, peran, hash sandi (scrypt) |
+| `activity_log` | log aktivitas |
+
+Di luar database: `images/` (unggahan dan gambar Instagram), `theme.css` dan file HTML hasil build, dan `.env.local` (rahasia, tidak di git).
+`data/seed/` hanya data awal untuk server baru (`npm run db:migrate`), diperbarui dengan `node scripts/db-export.mjs`.
 
 Setiap publikasi menjalankan `buildSite()` (`scripts/lib/site.mjs`), yang **membangun ulang seluruh halaman** (10 halaman EN+ID, detail Update, `theme.css`)
 dari konten yang sudah diterbitkan lewat `scripts/lib/render.mjs`. File HTML di repo adalah hasil build; ubah lewat admin, bukan langsung.
-Bisa dijalankan manual: `npm run build`. Struktur & aturan isi tiap section ada di `scripts/lib/schema.mjs`.
+Bisa dijalankan manual: `npm run build`. Struktur & aturan isi tiap section ada di `scripts/lib/schema.mjs`. Panduan server: `docs/DEPLOY.md`.
 
 ## Keamanan (ringkas)
 
