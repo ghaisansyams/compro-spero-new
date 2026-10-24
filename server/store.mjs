@@ -2,18 +2,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import { ROOT } from '../scripts/lib/updates.mjs'
+import { ROOT } from '../scripts/lib/env.mjs'
+import { insertActivity, recentActivity } from '../scripts/lib/db.mjs'
 
-const LOG = path.join(ROOT, 'data/activity.jsonl')
-export function logActivity(user, action, target = '', detail = '') {
-  fs.mkdirSync(path.dirname(LOG), { recursive: true })
-  fs.appendFileSync(LOG, JSON.stringify({ ts: new Date().toISOString(), user: user?.username || '-', action, target: String(target).slice(0, 200), detail: String(detail).slice(0, 300) }) + '\n')
+export async function logActivity(user, action, target = '', detail = '') {
+  try { await insertActivity({ user: user?.username || '-', action, target: String(target).slice(0, 200), detail: String(detail).slice(0, 300) }) }
+  catch (e) { console.error('[activity]', e.message) }   // a log failure must never break the request
 }
-export function readActivity(limit = 100) {
-  if (!fs.existsSync(LOG)) return []
-  return fs.readFileSync(LOG, 'utf8').trim().split('\n').filter(Boolean).slice(-limit).reverse()
-    .map((l) => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean)
-}
+export const readActivity = (limit = 100) => recentActivity(limit)
 
 export const MEDIA_DIR = path.join(ROOT, 'images/uploads')
 const MAX = 5 * 1024 * 1024

@@ -1,47 +1,35 @@
 // CMS content store (draft -> publish, version history) and the static-site builder.
-//   data/content.json   every editable collection as { draft, published }
-//   data/versions/…     snapshot of a collection each time it is published (restorable as a draft)
+//   PostgreSQL: cms_content (every editable collection as { draft, published }), cms_versions (snapshot on every publish)
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { ROOT, loadStore, saveStore, readEnv } from './updates.mjs'
+import { cache, insertVersion, listVersionRows, getVersionRow, countVersions } from './db.mjs'
 import { PAGE_PATH } from './schema.mjs'
 import { themeCss } from './theme.mjs'
 import { renderPage, shell, renderMain, esc } from './render.mjs'
 import { renderUpdateDetail, publishedUpdates, T_UPDATES } from './updates.mjs'
 
-const CONTENT = path.join(ROOT, 'data/content.json')
-const VERSIONS = path.join(ROOT, 'data/versions')
 export const PAGE_KEYS = Object.keys(PAGE_PATH)
 export const COLLECTIONS = ['site', 'nav', 'theme', 'team', 'clients', 'contact', 'portfolio', ...PAGE_KEYS.map((k) => `page:${k}`)]
 
-export function loadContent() { return JSON.parse(fs.readFileSync(CONTENT, 'utf8')) }
-export function saveContent(c) { fs.writeFileSync(CONTENT + '.tmp', JSON.stringify(c, null, 1) + '\n'); fs.renameSync(CONTENT + '.tmp', CONTENT) }
+export const loadContent = () => cache.content
+export const saveContent = (c) => { cache.content = c }
 export const col = (c, key) => (key.startsWith('page:') ? c.pages[key.slice(5)] : c[key])
 export const dirty = (c, key) => JSON.stringify(col(c, key).draft) !== JSON.stringify(col(c, key).published)
 const view = (c, which) => ({ site: c.site[which], nav: c.nav[which], theme: c.theme[which], portfolio: c.portfolio[which], team: c.team[which], clients: c.clients[which], contact: c.contact[which], pages: Object.fromEntries(PAGE_KEYS.map((k) => [k, c.pages[k][which]])) })
 
 /* ---------- versions ---------- */
-const vdir = (key) => path.join(VERSIONS, key.replace(/[^\w-]/g, '_'))
-export function saveVersion(key, data, user, note = '') {
-  const d = vdir(key); fs.mkdirSync(d, { recursive: true })
+export async function saveVersion(key, data, user, note = '') {
   const id = `${Date.now()}-${crypto.randomBytes(2).toString('hex')}`
-  fs.writeFileSync(path.join(d, id + '.json'), JSON.stringify({ id, ts: new Date().toISOString(), user: user?.username || 'system', key, note, data }))
-  const all = fs.readdirSync(d).filter((f) => f.endsWith('.json')).sort()
-  for (const f of all.slice(0, Math.max(0, all.length - 40))) fs.unlinkSync(path.join(d, f))   // keep latest 40
+  await insertVersion({ id, ts: new Date().toISOString(), user: user?.username || 'system', key, note, data })
   return id
 }
-export function listVersions(key) {
-  const d = vdir(key); if (!fs.existsSync(d)) return []
-  return fs.readdirSync(d).filter((f) => f.endsWith('.json')).sort().reverse().map((f) => { const v = JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')); return { id: v.id, ts: v.ts, user: v.user, note: v.note } })
-}
-export function getVersion(key, id) {
-  if (!/^[\w-]+$/.test(id)) return null
-  const f = path.join(vdir(key), id + '.json'); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null
-}
-export function ensureBaselineVersions() {
+export const listVersions = (key) => listVersionRows(key)
+export const getVersion = (key, id) => (/^[\w-]+$/.test(id) ? getVersionRow(key, id) : null)
+export async function ensureBaselineVersions() {
   const c = loadContent()
-  for (const key of COLLECTIONS) if (!listVersions(key).length) saveVersion(key, col(c, key).published, null, 'Versi awal')
+  for (const key of COLLECTIONS) if (!(await countVersions(key))) await saveVersion(key, col(c, key).published, null, 'Versi awal')
 }
 /** Short readable list of what differs between two JSON values. */
 export function diffSummary(a, b, max = 40) {

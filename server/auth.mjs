@@ -3,16 +3,16 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
-import { ROOT, readEnv } from '../scripts/lib/updates.mjs'
+import { ROOT, readEnv } from '../scripts/lib/env.mjs'
+import { cache } from '../scripts/lib/db.mjs'
 
 const scrypt = promisify(crypto.scrypt)
-const USERS = path.join(ROOT, 'data/admin-users.json')
 export const COOKIE = 'spero_admin'
 const TTL_MS = 8 * 60 * 60 * 1000
 export const ROLES = ['admin', 'editor']
 
-export function loadUsers() { try { return JSON.parse(fs.readFileSync(USERS, 'utf8')) } catch { return { users: [] } } }
-export function saveUsers(d) { fs.mkdirSync(path.dirname(USERS), { recursive: true }); fs.writeFileSync(USERS, JSON.stringify(d, null, 2) + '\n', { mode: 0o600 }) }
+export const loadUsers = () => cache.users
+export const saveUsers = (d) => { cache.users = d }
 export const publicUser = (u) => ({ id: u.id, username: u.username, name: u.name, role: u.role, disabled: !!u.disabled, lastLoginAt: u.lastLoginAt || null, createdAt: u.createdAt })
 
 export async function hashPassword(pw) {

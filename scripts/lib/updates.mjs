@@ -1,34 +1,12 @@
 // Shared pieces for the Update feature (mirrors Kelas Bermain's Instagram -> Update flow).
-//   data/updates.json   the store: posts land as DRAFTS, an admin step publishes them
-//   buildUpdates()      renders /update, /update/<slug> and the home teaser (EN + ID) from the store
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+//   The store (posts as DRAFTS until published) lives in PostgreSQL: tables `updates` + `cms_meta` (see scripts/lib/db.mjs).
+import { cache } from './db.mjs'
+export { ROOT, readEnv } from './env.mjs'
 
-export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const STORE = path.join(ROOT, 'data/updates.json')
 const e = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 
-/* ------------------------------------------------------------------ */
-/* env + store                                                          */
-/* ------------------------------------------------------------------ */
-export function readEnv(name) {
-  if (process.env[name]) return process.env[name]
-  for (const f of ['.env.local', '.env']) {
-    const p = path.join(ROOT, f)
-    if (!fs.existsSync(p)) continue
-    const m = fs.readFileSync(p, 'utf8').match(new RegExp(`^\\s*${name}\\s*=\\s*(.*?)\\s*$`, 'm'))
-    if (m && m[1]) return m[1].replace(/^['"]|['"]$/g, '')
-  }
-  return undefined
-}
-export function loadStore() {
-  try { return JSON.parse(fs.readFileSync(STORE, 'utf8')) } catch { return { account: 'spero_id', updatedAt: null, items: [] } }
-}
-export function saveStore(s) {
-  fs.mkdirSync(path.dirname(STORE), { recursive: true })
-  fs.writeFileSync(STORE, JSON.stringify(s, null, 2) + '\n')
-}
+export const loadStore = () => cache.store
+export const saveStore = (st) => { cache.store = st }
 
 /* ------------------------------------------------------------------ */
 /* caption -> card content (same rules as Kelas Bermain)                */
