@@ -5,3 +5,4 @@ node_modules/
 data/admin-users.json
 data/activity.jsonl
 *.log
+!.env.example
