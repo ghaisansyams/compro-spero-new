@@ -124,3 +124,21 @@
 .contact-list a:hover{color:var(--accent)}
 @media (max-width:1100px){.team-grid{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:760px){.team-grid{grid-template-columns:repeat(2,1fr);gap:14px}.contact-list>div{grid-template-columns:1fr;gap:6px}}
+
+/* ---------- Our clients: auto-sliding text marquee ---------- */
+.clients-band{padding-block:88px 96px;overflow:hidden}
+.clients-head{display:flex;justify-content:space-between;align-items:end;gap:40px;margin-bottom:44px}
+.clients-head p:not(.eyebrow){max-width:360px;font-size:14px;line-height:1.75;color:var(--muted)}
+.clients-head .eyebrow{margin-bottom:20px}
+.client-marquee{display:grid;gap:16px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+.client-row{overflow:hidden}
+.client-track{display:flex;width:max-content;animation:client-slide 70s linear infinite;will-change:transform}
+.client-row[data-dir=rtl] .client-track{animation-direction:reverse;animation-duration:84s}
+.client-marquee:hover .client-track{animation-play-state:paused}
+.client-set{display:flex;gap:14px;margin:0;padding:0 14px 0 0;list-style:none}
+.client-set li{display:flex;align-items:center;gap:12px;white-space:nowrap;padding:12px 22px 12px 12px;border:1px solid var(--line);border-radius:99px;background:var(--surface);font-size:15px;font-weight:600;letter-spacing:-.01em;transition:border-color .24s,color .24s,background .24s}
+.client-set li:hover{border-color:var(--accent);color:var(--accent);background:var(--background)}
+.client-ini{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--background);border:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--accent)}
+@keyframes client-slide{to{transform:translateX(-50%)}}
+@media (max-width:760px){.clients-head{flex-direction:column;align-items:start;gap:16px;margin-bottom:30px}.clients-band{padding-block:56px 64px}.client-set li{font-size:14px;padding-right:18px}}
+@media (prefers-reduced-motion:reduce){.client-track{animation:none}.client-row{overflow-x:auto}}
