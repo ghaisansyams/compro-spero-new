@@ -1,6 +1,7 @@
 // Admin JSON API. Every route except login/me requires a valid session; mutations are role-checked and logged.
 import crypto from 'node:crypto'
 import { loadStore, saveStore, toSlug, CATEGORIES, readEnv } from '../scripts/lib/updates.mjs'
+import { flush, refresh } from '../scripts/lib/db.mjs'
 import { loadContent, saveContent, dirty, buildSite, col, COLLECTIONS, PAGE_KEYS, saveVersion, listVersions, getVersion, diffSummary, previewPage, ensureBaselineVersions } from '../scripts/lib/site.mjs'
 import { SECTIONS, PAGES, ILLUSTRATIONS, cleanPage, cleanHref, newSection } from '../scripts/lib/schema.mjs'
 import { cleanTheme, presetTheme, PRESETS, LIGHT_KEYS, DARK_KEYS } from '../scripts/lib/theme.mjs'
@@ -105,14 +106,26 @@ function cleanPortfolio(v) {
 const cleaners = { team: cleanTeam, clients: cleanClients, contact: cleanContact, site: cleanSite, nav: cleanNav, theme: cleanTheme, portfolio: cleanPortfolio }
 const cleanFor = (key) => (key.startsWith('page:') ? cleanPage : cleaners[key])
 
-function rebuild(user, why) {
-  try { return buildSite() } catch (err) { console.error('[build]', err); logActivity(user, 'build.gagal', why, err.message); throw fail(500, 'Konten tersimpan, tetapi halaman gagal dibangun ulang.') }
+async function rebuild(user, why) {
+  await flush()   // simpan ke Postgres dulu; halaman baru dibangun dari data yang sudah tersimpan
+  try { return buildSite() } catch (err) { console.error('[build]', err); await logActivity(user, 'build.gagal', why, err.message); throw fail(500, 'Konten tersimpan, tetapi halaman gagal dibangun ulang.') }
 }
 const itemView = (i) => ({ key: i.key, source: i.source || 'instagram', slug: i.slug, title: i.title, excerpt: i.excerpt, caption: i.caption, category: i.category, publishedAt: i.publishedAt, imageUrl: i.imageUrl, postUrl: i.postUrl, type: i.type, published: !!i.published, visible: i.visible !== false, edited: !!i.edited })
 let syncing = false
 
 /* ---------- router ---------- */
-export async function handleApi(req, res, url) {
+let chain = Promise.resolve()
+/** Requests run one at a time: refresh the cache from Postgres, handle, then write changed rows back. */
+export function handleApi(req, res, url) {
+  const run = chain.then(async () => {
+    try { await refresh() } catch (e) { console.error('[db]', e.message); return send(res, 503, { error: 'Database tidak dapat dijangkau.' }) }
+    await handle(req, res, url)
+    if (req.method !== 'GET' && req.method !== 'HEAD') { try { await flush() } catch (e) { console.error('[db] flush gagal:', e.message) } }
+  })
+  chain = run.catch(() => {})
+  return run
+}
+async function handle(req, res, url) {
   const ip = req.socket.remoteAddress || '?', method = req.method, p = url.pathname.replace(/^\/api\/admin/, '') || '/'
   try {
     if (method !== 'GET' && method !== 'HEAD') {
@@ -121,7 +134,7 @@ export async function handleApi(req, res, url) {
     }
     if (p === '/login' && method === 'POST') {
       const b = await readBody(req), u = await login(ip, b.username, b.password)
-      logActivity(u, 'login'); return send(res, 200, { user: publicUser(u) }, { 'Set-Cookie': cookieHeader(makeToken(u)) })
+      await logActivity(u, 'login'); return send(res, 200, { user: publicUser(u) }, { 'Set-Cookie': cookieHeader(makeToken(u)) })
     }
     const user = userFromCookie(req.headers.cookie)
     if (p === '/me' && method === 'GET') return user ? send(res, 200, { user: publicUser(user) }) : send(res, 401, { error: 'Belum masuk.' })
@@ -130,11 +143,11 @@ export async function handleApi(req, res, url) {
     const body = method === 'GET' || method === 'DELETE' ? {} : await readBody(req)
     let m
 
-    if (p === '/logout' && method === 'POST') { logActivity(user, 'logout'); return send(res, 200, { ok: true }, { 'Set-Cookie': clearCookie() }) }
+    if (p === '/logout' && method === 'POST') { await logActivity(user, 'logout'); return send(res, 200, { ok: true }, { 'Set-Cookie': clearCookie() }) }
     if (p === '/me/password' && method === 'POST') {
       if (!(await checkPassword(user, body.current))) throw fail(400, 'Kata sandi saat ini salah.')
       if (!validPassword(body.next)) throw fail(400, 'Kata sandi baru minimal 10 karakter.')
-      await setPassword(user.id, body.next); logActivity(user, 'password.ganti')
+      await setPassword(user.id, body.next); await logActivity(user, 'password.ganti')
       const fresh = loadUsers().users.find((x) => x.id === user.id)
       return send(res, 200, { ok: true }, { 'Set-Cookie': cookieHeader(makeToken(fresh)) })
     }
@@ -160,7 +173,7 @@ export async function handleApi(req, res, url) {
       try {
         const c = loadContent()
         const report = await syncInstagram({ username: c.contact.published.instagram, publish: false })
-        const built = rebuild(user, 'sync'); logActivity(user, 'instagram.sinkron', `${report.saved} tersimpan`, `${report.drafts} draf baru`)
+        const built = await rebuild(user, 'sync'); await logActivity(user, 'instagram.sinkron', `${report.saved} tersimpan`, `${report.drafts} draf baru`)
         return send(res, 200, { report, built })
       } catch (err) { throw err.status ? err : fail(502, err.message) } finally { syncing = false }
     }
@@ -171,7 +184,7 @@ export async function handleApi(req, res, url) {
       const date = body.publishedAt && DATE.test(body.publishedAt) ? body.publishedAt : new Date().toISOString().slice(0, 10)
       const id = crypto.randomBytes(3).toString('hex'), clean = caption.replace(/\s+/g, ' ')
       const item = { key: `manual-${id}`, source: 'manual', slug: toSlug(title, `m${id}x`), title, excerpt: str(body.excerpt || (clean.length > 180 ? `${clean.slice(0, 180).trimEnd()}…` : clean), 1, 240, 'Ringkasan'), caption, imageUrl: body.imageUrl, postUrl: '', publishedAt: date, category: body.category, username: s.account || 'spero_id', type: 'Image', published: false, visible: true, edited: true }
-      s.items.push(item); saveStore(s); logActivity(user, 'update.buat', item.slug); rebuild(user, 'update.buat')
+      s.items.push(item); saveStore(s); await logActivity(user, 'update.buat', item.slug); await rebuild(user, 'update.buat')
       return send(res, 201, { item: itemView(item) })
     }
     if ((m = p.match(/^\/updates\/([\w-]+)$/))) {
@@ -179,7 +192,7 @@ export async function handleApi(req, res, url) {
       if (!it) throw fail(404, 'Update tidak ditemukan.')
       if (method === 'DELETE') {
         if (it.source !== 'manual') throw fail(400, 'Postingan Instagram tidak dihapus; sembunyikan saja agar tidak muncul lagi saat sinkron.')
-        s.items = s.items.filter((i) => i !== it); saveStore(s); logActivity(user, 'update.hapus', it.slug); rebuild(user, 'update.hapus')
+        s.items = s.items.filter((i) => i !== it); saveStore(s); await logActivity(user, 'update.hapus', it.slug); await rebuild(user, 'update.hapus')
         return send(res, 200, { ok: true })
       }
       if (method === 'PATCH') {
@@ -195,7 +208,7 @@ export async function handleApi(req, res, url) {
         if ('published' in body) set.published = !!body.published
         if ('visible' in body) set.visible = !!body.visible
         Object.assign(it, set); if (content) it.edited = true
-        saveStore(s); logActivity(user, 'update.ubah', it.slug, Object.keys(set).join(',')); rebuild(user, 'update.ubah')
+        saveStore(s); await logActivity(user, 'update.ubah', it.slug, Object.keys(set).join(',')); await rebuild(user, 'update.ubah')
         return send(res, 200, { item: itemView(it) })
       }
     }
@@ -222,27 +235,27 @@ export async function handleApi(req, res, url) {
     }
     if ((m = p.match(/^\/content\/([\w.]+)$/)) && method === 'PUT') {
       const key = keyOf(m[1]), c = loadContent(), cl = col(c, key)
-      cl.draft = cleanFor(key)(body.data); saveContent(c); logActivity(user, `${key}.simpan-draf`)
+      cl.draft = cleanFor(key)(body.data); saveContent(c); await logActivity(user, `${key}.simpan-draf`)
       return send(res, 200, { draft: cl.draft, dirty: dirty(c, key), changes: dirty(c, key) ? diffSummary(cl.published, cl.draft) : [] })
     }
     if ((m = p.match(/^\/content\/([\w.]+)\/(publish|discard)$/)) && method === 'POST') {
       const key = keyOf(m[1]), c = loadContent(), cl = col(c, key)
       if (m[2] === 'publish') {
         cl.published = JSON.parse(JSON.stringify(cl.draft)); saveContent(c)
-        saveVersion(key, cl.published, user, String(body.note || '').slice(0, 120)); rebuild(user, `${key}.terbit`)
+        await saveVersion(key, cl.published, user, String(body.note || '').slice(0, 120)); await rebuild(user, `${key}.terbit`)
       } else { cl.draft = JSON.parse(JSON.stringify(cl.published)); saveContent(c) }
-      logActivity(user, `${key}.${m[2] === 'publish' ? 'terbitkan' : 'buang-draf'}`)
+      await logActivity(user, `${key}.${m[2] === 'publish' ? 'terbitkan' : 'buang-draf'}`)
       return send(res, 200, { draft: cl.draft, published: cl.published, dirty: dirty(c, key) })
     }
-    if ((m = p.match(/^\/versions\/([\w.]+)$/)) && method === 'GET') { ensureBaselineVersions(); return send(res, 200, { items: listVersions(keyOf(m[1])) }) }
+    if ((m = p.match(/^\/versions\/([\w.]+)$/)) && method === 'GET') { await ensureBaselineVersions(); return send(res, 200, { items: await listVersions(keyOf(m[1])) }) }
     if ((m = p.match(/^\/versions\/([\w.]+)\/([\w-]+)$/)) && method === 'GET') {
-      const key = keyOf(m[1]), v = getVersion(key, m[2]); if (!v) throw fail(404, 'Versi tidak ditemukan.')
+      const key = keyOf(m[1]), v = await getVersion(key, m[2]); if (!v) throw fail(404, 'Versi tidak ditemukan.')
       return send(res, 200, { id: v.id, ts: v.ts, user: v.user, note: v.note, changes: diffSummary(col(loadContent(), key).published, v.data) })
     }
     if ((m = p.match(/^\/versions\/([\w.]+)\/([\w-]+)\/restore$/)) && method === 'POST') {
-      const key = keyOf(m[1]), v = getVersion(key, m[2]); if (!v) throw fail(404, 'Versi tidak ditemukan.')
+      const key = keyOf(m[1]), v = await getVersion(key, m[2]); if (!v) throw fail(404, 'Versi tidak ditemukan.')
       const c = loadContent(), cl = col(c, key); cl.draft = cleanFor(key)(v.data)   // masuk sebagai draf; terbitkan setelah ditinjau
-      saveContent(c); logActivity(user, `${key}.pulihkan`, v.id); return send(res, 200, { draft: cl.draft, dirty: dirty(c, key) })
+      saveContent(c); await logActivity(user, `${key}.pulihkan`, v.id); return send(res, 200, { draft: cl.draft, dirty: dirty(c, key) })
     }
     if ((m = p.match(/^\/(team|clients|contact)$/))) throw fail(410, 'Rute lama; gunakan /content/:key.')
 
@@ -250,24 +263,24 @@ export async function handleApi(req, res, url) {
     if (p === '/media' && method === 'GET') return send(res, 200, { items: listMedia() })
     if (p === '/media' && method === 'POST') {
       let f; try { f = saveUpload(body.data) } catch (err) { throw fail(400, err.message) }
-      logActivity(user, 'media.unggah', f.name); return send(res, 201, f)
+      await logActivity(user, 'media.unggah', f.name); return send(res, 201, f)
     }
     if ((m = p.match(/^\/media\/([\w.-]+)$/)) && method === 'DELETE') {
       const c = loadContent(), s = loadStore(), url = `/images/uploads/${m[1]}`
       const used = JSON.stringify(c).includes(url) || JSON.stringify(s).includes(url)
       if (used) throw fail(409, 'Gambar ini masih dipakai (tim, update, portofolio, atau pengaturan situs).')
       try { deleteMedia(m[1]) } catch (err) { throw fail(400, err.message) }
-      logActivity(user, 'media.hapus', m[1]); return send(res, 200, { ok: true })
+      await logActivity(user, 'media.hapus', m[1]); return send(res, 200, { ok: true })
     }
 
     /* admin only */
-    if (p === '/rebuild' && method === 'POST') { need(); const r = rebuild(user, 'manual'); logActivity(user, 'situs.bangun-ulang'); return send(res, 200, r) }
-    if (p === '/activity' && method === 'GET') { need(); return send(res, 200, { items: readActivity(200) }) }
+    if (p === '/rebuild' && method === 'POST') { need(); const r = await rebuild(user, 'manual'); await logActivity(user, 'situs.bangun-ulang'); return send(res, 200, r) }
+    if (p === '/activity' && method === 'GET') { need(); return send(res, 200, { items: await readActivity(200) }) }
     if (p === '/users' && method === 'GET') { need(); return send(res, 200, { users: loadUsers().users.map(publicUser) }) }
     if (p === '/users' && method === 'POST') {
       need()
       const u = await createUser({ username: String(body.username || '').toLowerCase(), name: body.name, role: body.role, password: body.password }).catch((err) => { throw fail(400, err.message) })
-      logActivity(user, 'pengguna.buat', u.username, u.role); return send(res, 201, { user: publicUser(u) })
+      await logActivity(user, 'pengguna.buat', u.username, u.role); return send(res, 201, { user: publicUser(u) })
     }
     if ((m = p.match(/^\/users\/([\w-]+)$/))) {
       need()
@@ -277,7 +290,7 @@ export async function handleApi(req, res, url) {
       if (method === 'DELETE') {
         if (u.id === user.id) throw fail(400, 'Anda tidak bisa menghapus akun sendiri.')
         if (u.role === 'admin' && !otherAdmins) throw fail(400, 'Harus tersisa minimal satu admin aktif.')
-        d.users = d.users.filter((x) => x !== u); saveUsers(d); logActivity(user, 'pengguna.hapus', u.username); return send(res, 200, { ok: true })
+        d.users = d.users.filter((x) => x !== u); saveUsers(d); await logActivity(user, 'pengguna.hapus', u.username); return send(res, 200, { ok: true })
       }
       if (method === 'PATCH') {
         if ('role' in body) { if (!ROLES.includes(body.role)) throw fail(400, 'Peran tidak valid.'); if (u.role === 'admin' && body.role !== 'admin' && !otherAdmins) throw fail(400, 'Harus tersisa minimal satu admin aktif.'); u.role = body.role }
@@ -285,7 +298,7 @@ export async function handleApi(req, res, url) {
         if ('name' in body) u.name = str(body.name, 1, 80, 'Nama')
         saveUsers(d)
         if (body.password) await setPassword(u.id, body.password).catch((err) => { throw fail(400, err.message) })
-        logActivity(user, 'pengguna.ubah', u.username, Object.keys(body).filter((k) => k !== 'password').join(',') + (body.password ? ',password' : ''))
+        await logActivity(user, 'pengguna.ubah', u.username, Object.keys(body).filter((k) => k !== 'password').join(',') + (body.password ? ',password' : ''))
         return send(res, 200, { user: publicUser(loadUsers().users.find((x) => x.id === u.id)) })
       }
     }

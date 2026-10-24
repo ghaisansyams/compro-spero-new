@@ -5,7 +5,8 @@
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
-import { ROOT, readEnv } from '../scripts/lib/updates.mjs'
+import { ROOT, readEnv } from '../scripts/lib/env.mjs'
+import { init, close } from '../scripts/lib/db.mjs'
 import { handleApi } from './api.mjs'
 
 const PORT = Number(readEnv('PORT') || 8078), HOST = readEnv('HOST') || '127.0.0.1'
@@ -33,7 +34,8 @@ function notFound(res) {
 }
 const ADMIN_CSP = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 
-http.createServer(async (req, res) => {
+try { await init() } catch (e) { console.error(`\n[db] ${e.message}\n`); process.exit(1) }
+const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
     if (url.pathname.startsWith('/api/admin')) return handleApi(req, res, url)
@@ -56,4 +58,6 @@ http.createServer(async (req, res) => {
     if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain' })
     res.end('Server error')
   }
-}).listen(PORT, HOST, () => console.log(`Spero site  http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}   admin: /admin/`))
+})
+server.listen(PORT, HOST, () => console.log(`Spero site  http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}   admin: /admin/   (database: PostgreSQL)`))
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => server.close(async () => { await close(); process.exit(0) }))
