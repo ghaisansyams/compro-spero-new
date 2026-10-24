@@ -6,6 +6,7 @@
 import crypto from 'node:crypto'
 import readline from 'node:readline'
 import { loadUsers, createUser, setPassword, publicUser } from '../server/auth.mjs'
+import { init, flush, close } from './lib/db.mjs'
 
 const [cmd, username] = process.argv.slice(2)
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > -1 ? process.argv[i + 1] : d }
@@ -25,6 +26,7 @@ async function password() {
   return a
 }
 try {
+  await init()
   if (cmd === 'list') { for (const u of loadUsers().users.map(publicUser)) console.log(`${u.username}\t${u.role}\t${u.disabled ? 'nonaktif' : 'aktif'}`) }
   else if (cmd === 'add' && username) {
     const pw = await password()
@@ -35,5 +37,6 @@ try {
     if (!u) throw new Error('Pengguna tidak ditemukan.')
     const pw = await password(); await setPassword(u.id, pw)
     console.log('Kata sandi diganti; semua sesi lama dicabut.'); if (gen) console.log(`Kata sandi baru (tampil sekali): ${pw}`)
-  } else { console.error('Pemakaian: add <username> | passwd <username> | list'); process.exit(1) }
-} catch (err) { console.error(err.message); process.exit(1) }
+  } else { console.error('Pemakaian: add <username> | passwd <username> | list'); await close(); process.exit(1) }
+  await flush(); await close()
+} catch (err) { console.error(err.message); await close().catch(() => {}); process.exit(1) }
