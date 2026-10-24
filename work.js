@@ -20,15 +20,23 @@ $('[data-work-rail]').forEach(function(w){
   // vertical mouse wheel stays page scroll; horizontal gestures pan natively
   upd();
 });
+// ---- description "Show all" toggle (only when text is actually clipped)
+function clip(){$('.work-descwrap').forEach(function(w){var p=w.querySelector('.work-desc'),b=w.querySelector('.work-toggle');
+  if(w.classList.contains('is-open')){b.hidden=false;return}
+  b.hidden=!(p.scrollHeight>p.clientHeight+2)})}
+d.addEventListener('click',function(e){var b=e.target.closest('.work-toggle');if(!b)return;
+  var w=b.parentElement,open=w.classList.toggle('is-open');b.setAttribute('aria-expanded',String(open));b.textContent=open?b.dataset.hide:b.dataset.show;
+  e.preventDefault()});
+addEventListener('load',clip);addEventListener('resize',clip);if(d.fonts&&d.fonts.ready)d.fonts.ready.then(clip);clip();
 // ---- show all + filter
 var tg=d.querySelector('[data-toggle-all]'),all=d.getElementById('all');
 function setAll(open){if(!all)return;all.hidden=!open;tg.setAttribute('aria-expanded',String(open));tg.firstElementChild.textContent=open?tg.dataset.less:tg.dataset.more;tg.lastElementChild.textContent=open?'↑':'↓';
-  if(open)all.scrollIntoView({behavior:'smooth',block:'start'})}
+  if(open){clip();all.scrollIntoView({behavior:'smooth',block:'start'})}}
 if(tg)tg.onclick=function(){setAll(all.hidden)};
 if(all&&location.hash==='#all')setTimeout(function(){setAll(true)},50);
 $('[data-filter]').forEach(function(b){b.onclick=function(){
   $('[data-filter]').forEach(function(x){x.classList.toggle('is-on',x===b)});
-  var f=b.dataset.filter;$('.work-card',all).forEach(function(c){c.hidden=!(f==='all'||c.dataset.cat===f)})}});
+  var f=b.dataset.filter;$('.work-card',all).forEach(function(c){c.hidden=!(f==='all'||c.dataset.cat===f)});clip()}});
 // ---- lightbox
 var lb=d.getElementById('lightbox'),cur=null,k=0;
 function show(){var it=DATA[cur],im=it.images[k];lb.querySelector('img').src=im.src;lb.querySelector('img').alt=it.name+' — '+im.label;
