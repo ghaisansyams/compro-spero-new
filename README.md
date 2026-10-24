@@ -9,5 +9,6 @@ Menjalankan: `python3 -m http.server 8078`, lalu buka http://localhost:8078
 
 ## Halaman Update (Instagram)
 
-`/update` menampilkan postingan dari `data/instagram.json`. Cara mengisinya dari
-https://www.instagram.com/spero_id/ lewat Apify ada di [docs/APIFY-INSTAGRAM.md](docs/APIFY-INSTAGRAM.md).
+`/update`, `/update/<slug>` dan teaser di beranda dibangun dari `data/updates.json`, yang diisi dari
+https://www.instagram.com/spero_id/ lewat Apify (fitur yang sama dengan Kelas Bermain: draf, terbitkan,
+sinkron tengah malam). Panduan: [docs/APIFY-INSTAGRAM.md](docs/APIFY-INSTAGRAM.md).

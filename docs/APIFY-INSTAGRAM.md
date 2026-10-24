@@ -1,77 +1,58 @@
-# Mengambil postingan Instagram @spero_id lewat Apify
+# Update dari Instagram @spero_id (Apify)
 
-Halaman **Update** (`/update`) membaca `data/instagram.json`. File itu diisi oleh
-`scripts/fetch-instagram.mjs`, yang memanggil Actor **Instagram Scraper** di Apify.
-Token Apify hanya dipakai di skrip ini (di komputer Anda), tidak pernah masuk ke browser.
+Fiturnya sama dengan halaman Update di Kelas Bermain:
 
-## 1. Buat akun dan ambil API token
+- **Actor Apify**: `apify/instagram-post-scraper` (input: `username`, `resultsLimit`, `dataDetailLevel: basicData`).
+- Postingan masuk sebagai **DRAF** dan baru tayang setelah diterbitkan (padanan tombol *Terbitkan* di CMS).
+- Gambar disalin ke `images/instagram/` (URL CDN Instagram kedaluwarsa).
+- Judul, ringkasan, slug, dan kategori (Kegiatan / Event / Pengumuman / Dokumentasi) dibuat otomatis dari caption.
+- Halaman yang dibuat: daftar `/update`, detail `/update/<slug>`, teaser "Update terbaru" di beranda (EN dan ID).
+- Nol postingan dari Apify dianggap **gagal**, data lama tidak diubah.
 
-1. Daftar di https://console.apify.com (bisa pakai Google/GitHub). Akun gratis mendapat kredit
-   bulanan; cek angka terbarunya di halaman Billing.
-2. Buka **Settings → API & Integrations** (atau https://console.apify.com/account/integrations).
-3. Di **Personal API tokens**, salin token (`apify_api_...`). Boleh buat token baru lewat
-   **+ Create new token** dan beri nama, misalnya `spero-website`.
-4. Anggap token seperti password. Jangan ditempel di HTML/JS, jangan di-commit.
-   Kalau terlanjur bocor, hapus tokennya di halaman yang sama lalu buat yang baru.
+## Setup sekali
 
-## 2. Coba dulu lewat web (tanpa kode)
+1. Token: console.apify.com → Settings → API & Integrations → Personal API tokens. (Pakai token yang sama dengan Kelas Bermain boleh; kreditnya satu akun.)
+2. Buat `.env.local` di folder proyek (sudah di-gitignore):
+   ```
+   APIFY_TOKEN=apify_api_xxxxxxxx
+   INSTAGRAM_USERNAME=spero_id
+   INSTAGRAM_LIMIT=12
+   INSTAGRAM_SKIP_VIDEO=false
+   ```
 
-1. Buka Actor: https://apify.com/apify/instagram-scraper lalu klik **Try for free**.
-2. Isi **Input**:
-   - **Direct URLs**: `https://www.instagram.com/spero_id/`
-   - **Type of results (Results type)**: `Posts`
-   - **Max items / Results limit**: `12`
-3. Klik **Start**. Setelah status **Succeeded**, buka tab **Output / Storage** untuk melihat datanya.
-4. Cek kolom yang dipakai website: `shortCode`, `url`, `caption`, `displayUrl`, `likesCount`,
-   `commentsCount`, `timestamp`, `type`. Kalau di Output Anda namanya berbeda, sesuaikan
-   bagian pemetaan di `scripts/fetch-instagram.mjs`.
-5. (Opsional) Klik **Export** → JSON untuk menyimpan hasilnya sebagai file.
-
-## 3. Pakai lewat API (yang dijalankan skrip)
-
-Satu panggilan: jalankan Actor, tunggu selesai, langsung terima hasilnya.
-
-```bash
-curl -X POST "https://api.apify.com/v2/acts/apify~instagram-scraper/run-sync-get-dataset-items" \
-  -H "Authorization: Bearer $APIFY_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"directUrls":["https://www.instagram.com/spero_id/"],"resultsType":"posts","resultsLimit":12,"addParentData":false}'
-```
-
-Catatan: pada URL API, nama Actor ditulis dengan `~` (`apify~instagram-scraper`), bukan `/`.
-Endpoint `run-sync-...` menunggu paling lama sekitar 5 menit. Kalau akun besar atau lambat,
-pakai pola asinkron: `POST /v2/acts/apify~instagram-scraper/runs`, lalu ambil hasilnya dari
-`GET /v2/datasets/{defaultDatasetId}/items`.
-
-## 4. Jalankan di proyek ini
+## Pemakaian
 
 ```bash
 cd ~/Projects/pana-clone-full
 
-# simpan token (file ini sudah masuk .gitignore)
-echo 'APIFY_TOKEN=apify_api_xxxxxxxx' > .env.local
-
-# ambil 12 postingan terbaru -> data/instagram.json + images/instagram/*.jpg
-node scripts/fetch-instagram.mjs
-
-# opsi
-node scripts/fetch-instagram.mjs --user spero_id --limit 20
-node scripts/fetch-instagram.mjs --from dataset.json   # pakai hasil export, tanpa memanggil API
+node scripts/instagram-sync.mjs               # ambil dari Apify -> simpan sebagai draf -> bangun halaman
+node scripts/instagram-publish.mjs list       # lihat status: DRAF / TAYANG / TERSEMBUNYI
+node scripts/instagram-publish.mjs publish all            # terbitkan semua draf
+node scripts/instagram-publish.mjs publish <slug>         # terbitkan satu
+node scripts/instagram-publish.mjs unpublish <slug|all>   # tarik kembali jadi draf
+node scripts/instagram-publish.mjs hide <slug>            # sembunyikan; sinkron berikutnya tidak menampilkannya lagi
+node scripts/instagram-publish.mjs show <slug>
 ```
 
-Lalu buka http://localhost:8078/update. Gambar disalin ke `images/instagram/` karena link
-gambar Instagram kedaluwarsa dan tidak boleh di-hotlink.
+Opsi sinkron: `--publish` (postingan baru langsung tayang), `--from dump.json` (pakai export dari Apify
+Console tanpa memanggil API).
 
-## 5. Biar otomatis (opsional)
+Status terbit/sembunyi **tidak ditimpa** oleh sinkron berikutnya; yang diperbarui hanya isi (caption, gambar, dll).
 
-- **Jadwal di Apify**: di halaman Actor pilih **Schedules**, misalnya tiap hari jam 06.00.
-- **Cron / GitHub Actions**: jalankan `node scripts/fetch-instagram.mjs` terjadwal, simpan
-  `APIFY_TOKEN` sebagai *secret*, lalu commit `data/` dan `images/instagram/`.
+## Otomatis tiap tengah malam (seperti cron Kelas Bermain)
 
-## Catatan
+`crontab -e`, lalu tambahkan (zona waktu Mac harus WIB):
 
-- Hanya akun/postingan **publik**. Instagram bisa mengubah struktur halamannya sewaktu-waktu;
-  Actor di Apify biasanya diperbarui oleh pembuatnya, jadi kalau hasil kosong cek halaman Actor.
-- Biaya dihitung per hasil/penggunaan Actor, lihat harga terbaru di halaman Actor sebelum
-  menjadwalkan dalam jumlah besar.
-- Pakai data hanya dari akun milik sendiri atau yang diizinkan, dan patuhi ketentuan Instagram.
+```
+0 0 * * * cd /Users/ghaisansyams/Projects/pana-clone-full && /usr/local/bin/node scripts/instagram-sync.mjs --publish >> /tmp/spero-instagram.log 2>&1
+```
+
+`--publish` hanya bila Anda mau postingan baru langsung tayang tanpa review; tanpa itu postingan baru
+menunggu `publish`. Cek path node dengan `which node`.
+
+## Biaya dan catatan
+
+- Akun Apify gratis mendapat kredit bulanan; 12 postingan per sinkron sangat kecil biayanya. Cek **Usage**
+  di console setelah run pertama.
+- Hanya postingan publik dari akun sendiri; tidak ada login Instagram.
+- Jangan commit token. Jika bocor, hapus dan buat ulang di Settings → API & Integrations.
