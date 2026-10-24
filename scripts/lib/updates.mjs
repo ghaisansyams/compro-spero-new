@@ -134,7 +134,8 @@ export function buildUpdates() {
     if (!fs.existsSync(listFile)) continue
     let list = fs.readFileSync(listFile, 'utf8')
     const band = (list.match(/<section class="contact-band">.*?<\/section>/s) || [''])[0]
-    const intro = (list.match(/<header class="container page-intro illustrated-intro">.*?<\/header>/s) || [''])[0]
+    const intro = ((list.match(/<header class="container page-intro illustrated-intro">.*?<\/header>/s) || [''])[0])
+      .replace(/https:\/\/www\.instagram\.com\/[\w.]+\//g, `https://www.instagram.com/${account}/`).replace(/@[A-Za-z0-9_.]+/g, `@${account}`)
     const tpl = list.replace(/<main id="main-content".*?<\/main>/s, '@@MAIN@@')
     const mk = (main, meta) => setMeta(tpl.replace('@@MAIN@@', () => main), meta)
     const listTitle = l === 'id' ? `Update | ${t.siteName}` : `Updates | ${t.siteName}`

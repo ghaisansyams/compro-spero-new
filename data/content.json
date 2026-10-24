@@ -1,0 +1,278 @@
+{
+  "team": {
+    "draft": [
+      {
+        "id": "t1",
+        "name": "Galih Aldio Putra",
+        "role": "Direktur Utama",
+        "photo": "/images/team/dummy-6.jpg"
+      },
+      {
+        "id": "t2",
+        "name": "Mus Mulyadi",
+        "role": "Komisaris II",
+        "photo": "/images/team/dummy-1.jpg"
+      },
+      {
+        "id": "t3",
+        "name": "Chandra Kirana",
+        "role": "Komisaris I",
+        "photo": "/images/team/dummy-2.jpg"
+      },
+      {
+        "id": "t4",
+        "name": "Yofa Bonita",
+        "role": "Finance",
+        "photo": "/images/team/dummy-3.jpg"
+      },
+      {
+        "id": "t5",
+        "name": "Muhammad Ifan",
+        "role": "Finance",
+        "photo": "/images/team/dummy-4.jpg"
+      },
+      {
+        "id": "t6",
+        "name": "Angga Ferdani",
+        "role": "Programmer",
+        "photo": "/images/team/dummy-5.jpg"
+      },
+      {
+        "id": "t7",
+        "name": "Badar Maulana",
+        "role": "Developer",
+        "photo": "/images/team/dummy-7.jpg"
+      },
+      {
+        "id": "t8",
+        "name": "Ghaisan Raziq Syams",
+        "role": "Developer",
+        "photo": "/images/team/dummy-8.jpg"
+      }
+    ],
+    "published": [
+      {
+        "id": "t1",
+        "name": "Galih Aldio Putra",
+        "role": "Direktur Utama",
+        "photo": "/images/team/dummy-6.jpg"
+      },
+      {
+        "id": "t2",
+        "name": "Mus Mulyadi",
+        "role": "Komisaris II",
+        "photo": "/images/team/dummy-1.jpg"
+      },
+      {
+        "id": "t3",
+        "name": "Chandra Kirana",
+        "role": "Komisaris I",
+        "photo": "/images/team/dummy-2.jpg"
+      },
+      {
+        "id": "t4",
+        "name": "Yofa Bonita",
+        "role": "Finance",
+        "photo": "/images/team/dummy-3.jpg"
+      },
+      {
+        "id": "t5",
+        "name": "Muhammad Ifan",
+        "role": "Finance",
+        "photo": "/images/team/dummy-4.jpg"
+      },
+      {
+        "id": "t6",
+        "name": "Angga Ferdani",
+        "role": "Programmer",
+        "photo": "/images/team/dummy-5.jpg"
+      },
+      {
+        "id": "t7",
+        "name": "Badar Maulana",
+        "role": "Developer",
+        "photo": "/images/team/dummy-7.jpg"
+      },
+      {
+        "id": "t8",
+        "name": "Ghaisan Raziq Syams",
+        "role": "Developer",
+        "photo": "/images/team/dummy-8.jpg"
+      }
+    ]
+  },
+  "clients": {
+    "draft": [
+      "MPR RI",
+      "Kominfo",
+      "BAKTI Kominfo",
+      "BTN",
+      "TMII",
+      "PAR",
+      "Nexxuz",
+      "Waskita",
+      "Kapal Api",
+      "PELNI",
+      "IDI",
+      "PDFMI",
+      "Uniqlo",
+      "Kemnaker",
+      "BLU",
+      "Motion H2",
+      "Onelito Koi",
+      "Japan Direct Koi Center",
+      "Win-Shop.ID",
+      "SUN Balai Lelang",
+      "Saranawisesa",
+      "Hangout Project",
+      "MIX",
+      "STIKOM CKI",
+      "SMK Atlantis Plus",
+      "Yacko School",
+      "Pelajar Digital",
+      "Elegan",
+      "Mizab",
+      "Okeev",
+      "Holomoc",
+      "Toyota",
+      "Daihatsu",
+      "Telkomsel",
+      "ASUS",
+      "BNI",
+      "Ancol",
+      "Dunhill",
+      "Museum Geologi",
+      "Revlon",
+      "ANRI",
+      "Motorola",
+      "TATA",
+      "Mitratel",
+      "Samsung",
+      "Sky World",
+      "BPMIGAS",
+      "Museum Sejarah Jakarta",
+      "BPJS Ketenagakerjaan",
+      "Daikin",
+      "Bridgestone",
+      "Garuda Indonesia",
+      "XL",
+      "Hypermart",
+      "BRI",
+      "Jakarta Aquarium Safari",
+      "PERURI",
+      "LMAN",
+      "The Glassavvy",
+      "Jalinrealty",
+      "Astra",
+      "Grebe",
+      "AXIS",
+      "Unilever",
+      "DBS",
+      "Sinarmas",
+      "Trans Studio",
+      "Sanofi",
+      "MarkPlus Insight",
+      "Bapenda Jabar",
+      "KKP",
+      "3 Pillar Exportir",
+      "Mall BTM Bogor",
+      "Dinas Perdagangan Kota Surakarta"
+    ],
+    "published": [
+      "MPR RI",
+      "Kominfo",
+      "BAKTI Kominfo",
+      "BTN",
+      "TMII",
+      "PAR",
+      "Nexxuz",
+      "Waskita",
+      "Kapal Api",
+      "PELNI",
+      "IDI",
+      "PDFMI",
+      "Uniqlo",
+      "Kemnaker",
+      "BLU",
+      "Motion H2",
+      "Onelito Koi",
+      "Japan Direct Koi Center",
+      "Win-Shop.ID",
+      "SUN Balai Lelang",
+      "Saranawisesa",
+      "Hangout Project",
+      "MIX",
+      "STIKOM CKI",
+      "SMK Atlantis Plus",
+      "Yacko School",
+      "Pelajar Digital",
+      "Elegan",
+      "Mizab",
+      "Okeev",
+      "Holomoc",
+      "Toyota",
+      "Daihatsu",
+      "Telkomsel",
+      "ASUS",
+      "BNI",
+      "Ancol",
+      "Dunhill",
+      "Museum Geologi",
+      "Revlon",
+      "ANRI",
+      "Motorola",
+      "TATA",
+      "Mitratel",
+      "Samsung",
+      "Sky World",
+      "BPMIGAS",
+      "Museum Sejarah Jakarta",
+      "BPJS Ketenagakerjaan",
+      "Daikin",
+      "Bridgestone",
+      "Garuda Indonesia",
+      "XL",
+      "Hypermart",
+      "BRI",
+      "Jakarta Aquarium Safari",
+      "PERURI",
+      "LMAN",
+      "The Glassavvy",
+      "Jalinrealty",
+      "Astra",
+      "Grebe",
+      "AXIS",
+      "Unilever",
+      "DBS",
+      "Sinarmas",
+      "Trans Studio",
+      "Sanofi",
+      "MarkPlus Insight",
+      "Bapenda Jabar",
+      "KKP",
+      "3 Pillar Exportir",
+      "Mall BTM Bogor",
+      "Dinas Perdagangan Kota Surakarta"
+    ]
+  },
+  "contact": {
+    "draft": {
+      "email": "speromahakarya@gmail.com",
+      "phones": [
+        "+62 895 2373 8287",
+        "+62 895 3370 57292"
+      ],
+      "address": "Cinere Residence F5 / 30\nMeruyung, Limo,\nDepok, Jawa Barat 16515, ID",
+      "instagram": "spero_id"
+    },
+    "published": {
+      "email": "speromahakarya@gmail.com",
+      "phones": [
+        "+62 895 2373 8287",
+        "+62 895 3370 57292"
+      ],
+      "address": "Cinere Residence F5 / 30\nMeruyung, Limo,\nDepok, Jawa Barat 16515, ID",
+      "instagram": "spero_id"
+    }
+  }
+}

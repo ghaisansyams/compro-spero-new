@@ -5,7 +5,8 @@
 //   node scripts/instagram-publish.mjs unpublish <slug|all>
 //   node scripts/instagram-publish.mjs hide <slug>      # sembunyikan; sinkron berikutnya tidak menampilkannya lagi
 //   node scripts/instagram-publish.mjs show <slug>
-import { loadStore, saveStore, buildUpdates } from './lib/updates.mjs'
+import { loadStore, saveStore } from './lib/updates.mjs'
+import { buildSite as buildUpdates } from './lib/site.mjs'
 const [cmd, target] = process.argv.slice(2)
 const store = loadStore()
 const pick = () => (target === 'all' ? store.items : store.items.filter((i) => i.slug === target || i.key === target))

@@ -9,6 +9,8 @@ Fiturnya sama dengan halaman Update di Kelas Bermain:
 - Halaman yang dibuat: daftar `/update`, detail `/update/<slug>`, teaser "Update terbaru" di beranda (EN dan ID).
 - Nol postingan dari Apify dianggap **gagal**, data lama tidak diubah.
 
+Cara paling mudah: buka **/admin/ → Update → Sinkron Instagram** (lihat [ADMIN.md](ADMIN.md)). Perintah terminal di bawah melakukan hal yang sama.
+
 ## Setup sekali
 
 1. Token: console.apify.com → Settings → API & Integrations → Personal API tokens. (Pakai token yang sama dengan Kelas Bermain boleh; kreditnya satu akun.)

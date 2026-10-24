@@ -5,7 +5,7 @@ Latihan kuliah: mempelajari struktur dan CSS sebuah situs Next.js dengan menyali
 Repo ini **privat** dan hanya untuk belajar. Seluruh konten, logo, dan gambar di dalamnya milik
 Pana Digital Labs (https://www.pana.id) dan tidak boleh dipublikasikan atau dipakai ulang.
 
-Menjalankan: `python3 -m http.server 8078`, lalu buka http://localhost:8078
+Menjalankan: `npm start` (atau `node server/index.mjs`), lalu buka http://localhost:8078. Admin/CMS: http://localhost:8078/admin/ — lihat [docs/ADMIN.md](docs/ADMIN.md)
 
 ## Halaman Update (Instagram)
 

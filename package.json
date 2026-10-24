@@ -1,0 +1,12 @@
+{
+  "name": "spero-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "sync": "node scripts/instagram-sync.mjs",
+    "build": "node -e \"import('./scripts/lib/site.mjs').then(m=>console.log(m.buildSite()))\"",
+    "admin:user": "node scripts/admin-user.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
