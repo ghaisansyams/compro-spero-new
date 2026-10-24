@@ -1,0 +1,14 @@
+{
+  "account": "spero_id",
+  "profileUrl": "https://www.instagram.com/spero_id/",
+  "updatedAt": null,
+  "sample": true,
+  "posts": [
+    {"id":"s1","shortCode":"sample1","url":"https://www.instagram.com/spero_id/","type":"Image","caption":"Contoh postingan: pengumuman produk baru dari Spero. Konten ini akan diganti otomatis dengan postingan asli dari @spero_id setelah skrip pengambil data dijalankan.","image":"/images/placeholder.svg","likes":null,"comments":null,"timestamp":"2026-10-20T08:00:00Z"},
+    {"id":"s2","shortCode":"sample2","url":"https://www.instagram.com/spero_id/","type":"Sidecar","caption":"Contoh carousel: dokumentasi event dan aktivasi merek. Caption yang panjang akan dipotong beberapa baris dan bisa dibuka dengan tombol Show all supaya kartu tetap rapi di dalam grid, seperti di halaman portofolio.","image":"/images/placeholder.svg","likes":null,"comments":null,"timestamp":"2026-10-12T08:00:00Z"},
+    {"id":"s3","shortCode":"sample3","url":"https://www.instagram.com/spero_id/","type":"Video","caption":"Contoh video: demo singkat dashboard dan sistem monitoring.","image":"/images/placeholder.svg","likes":null,"comments":null,"timestamp":"2026-10-03T08:00:00Z"},
+    {"id":"s4","shortCode":"sample4","url":"https://www.instagram.com/spero_id/","type":"Image","caption":"Contoh postingan: tim Spero di lapangan.","image":"/images/placeholder.svg","likes":null,"comments":null,"timestamp":"2026-09-25T08:00:00Z"},
+    {"id":"s5","shortCode":"sample5","url":"https://www.instagram.com/spero_id/","type":"Image","caption":"Contoh postingan: tips teknologi untuk bisnis Anda.","image":"/images/placeholder.svg","likes":null,"comments":null,"timestamp":"2026-09-14T08:00:00Z"},
+    {"id":"s6","shortCode":"sample6","url":"https://www.instagram.com/spero_id/","type":"Image","caption":"Contoh postingan: kolaborasi dengan klien.","image":"/images/placeholder.svg","likes":null,"comments":null,"timestamp":"2026-09-02T08:00:00Z"}
+  ]
+}

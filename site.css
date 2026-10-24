@@ -142,3 +142,32 @@
 @keyframes client-slide{to{transform:translateX(-50%)}}
 @media (max-width:760px){.clients-head{flex-direction:column;align-items:start;gap:16px;margin-bottom:30px}.clients-band{padding-block:56px 64px}.client-set li{font-size:14px;padding-right:18px}}
 @media (prefers-reduced-motion:reduce){.client-track{animation:none}.client-row{overflow-x:auto}}
+
+/* ---------- Update (Instagram feed) ---------- */
+.update-section{padding-bottom:96px}
+.update-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:32px;padding-top:8px}
+.update-head h2{font-size:clamp(26px,2.6vw,36px)}
+.update-handle{border:1px solid var(--line);border-radius:99px;padding:6px 14px;font-size:13px;font-weight:650;color:var(--accent)}
+.update-handle:hover{border-color:var(--accent)}
+.update-stamp{margin-left:auto;font-size:12px;color:var(--muted)}
+.update-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.update-note{margin-top:28px;padding:14px 18px;border:1px dashed var(--line);border-radius:8px;font-size:13px;color:var(--muted)}
+.update-note[hidden]{display:none}
+.update-loading,.update-empty{grid-column:1/-1;padding:56px 0;text-align:center;color:var(--muted);font-size:14px}
+.ig-card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;transition:transform .3s var(--ease),border-color .24s,box-shadow .3s}
+.ig-card:hover{transform:translateY(-5px);border-color:color-mix(in oklab,var(--accent) 45%,var(--line));box-shadow:0 22px 44px -30px color-mix(in oklab,var(--accent) 55%,transparent)}
+.ig-media{position:relative;display:block;aspect-ratio:1;overflow:hidden;background:var(--background)}
+.ig-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s var(--ease)}
+.ig-card:hover .ig-media img{transform:scale(1.05)}
+.ig-type{position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:650;background:color-mix(in oklab,var(--background) 88%,transparent);backdrop-filter:blur(8px);border:1px solid var(--line)}
+.ig-body{display:flex;flex-direction:column;flex:1;padding:20px 22px 22px}
+.ig-meta{display:flex;justify-content:space-between;gap:12px;font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ig-body .work-descwrap{margin-top:12px}
+.ig-body .work-desc{-webkit-line-clamp:4;font-size:14px;white-space:pre-line}
+.ig-body .work-descwrap{flex:1}
+.ig-body .text-link{margin-top:18px;align-self:flex-start}
+@media (max-width:1100px){.update-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){.update-grid{grid-template-columns:1fr}.update-stamp{margin-left:0;width:100%}}
+
+/* label spans inside buttons/links keep body size; only the arrow icon is enlarged */
+.button>span:not([aria-hidden]),.text-link>span:not([aria-hidden]){font-size:inherit;line-height:inherit;transform:none!important}
