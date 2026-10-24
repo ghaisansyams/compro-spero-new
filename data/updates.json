@@ -47,7 +47,7 @@
       "category": "Kegiatan",
       "username": "spero_id",
       "type": "Sidecar",
-      "published": false,
+      "published": true,
       "visible": true
     },
     {
@@ -63,7 +63,7 @@
       "category": "Kegiatan",
       "username": "spero_id",
       "type": "Sidecar",
-      "published": false,
+      "published": true,
       "visible": true
     },
     {
@@ -79,7 +79,7 @@
       "category": "Kegiatan",
       "username": "spero_id",
       "type": "Sidecar",
-      "published": false,
+      "published": true,
       "visible": true
     },
     {
@@ -95,7 +95,7 @@
       "category": "Kegiatan",
       "username": "spero_id",
       "type": "Sidecar",
-      "published": false,
+      "published": true,
       "visible": true
     },
     {
@@ -111,7 +111,7 @@
       "category": "Kegiatan",
       "username": "spero_id",
       "type": "Image",
-      "published": false,
+      "published": true,
       "visible": true
     },
     {
@@ -127,7 +127,7 @@
       "category": "Kegiatan",
       "username": "spero_id",
       "type": "Image",
-      "published": false,
+      "published": true,
       "visible": true
     },
     {

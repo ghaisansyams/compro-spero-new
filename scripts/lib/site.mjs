@@ -1,93 +1,105 @@
-// Content store (team / clients / contact: draft -> publish) and the static-page generators.
-// buildSite() renders everything the public site shows from PUBLISHED content, so the site stays static.
+// CMS content store (draft -> publish, version history) and the static-site builder.
+//   data/content.json   every editable collection as { draft, published }
+//   data/versions/…     snapshot of a collection each time it is published (restorable as a draft)
 import fs from 'node:fs'
 import path from 'node:path'
-import { ROOT, loadStore, saveStore, buildUpdates } from './updates.mjs'
+import crypto from 'node:crypto'
+import { ROOT, loadStore, saveStore, readEnv } from './updates.mjs'
+import { PAGE_PATH } from './schema.mjs'
+import { themeCss } from './theme.mjs'
+import { renderPage, shell, renderMain, esc } from './render.mjs'
+import { renderUpdateDetail, publishedUpdates, T_UPDATES } from './updates.mjs'
 
 const CONTENT = path.join(ROOT, 'data/content.json')
-const e = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+const VERSIONS = path.join(ROOT, 'data/versions')
+export const PAGE_KEYS = Object.keys(PAGE_PATH)
+export const COLLECTIONS = ['site', 'nav', 'theme', 'team', 'clients', 'contact', 'portfolio', ...PAGE_KEYS.map((k) => `page:${k}`)]
 
-export function loadContent() {
-  try { return JSON.parse(fs.readFileSync(CONTENT, 'utf8')) } catch { return { team: { draft: [], published: [] }, clients: { draft: [], published: [] }, contact: { draft: {}, published: {} } } }
-}
-export function saveContent(c) { fs.writeFileSync(CONTENT, JSON.stringify(c, null, 2) + '\n') }
-export const dirty = (c, k) => JSON.stringify(c[k].draft) !== JSON.stringify(c[k].published)
+export function loadContent() { return JSON.parse(fs.readFileSync(CONTENT, 'utf8')) }
+export function saveContent(c) { fs.writeFileSync(CONTENT + '.tmp', JSON.stringify(c, null, 1) + '\n'); fs.renameSync(CONTENT + '.tmp', CONTENT) }
+export const col = (c, key) => (key.startsWith('page:') ? c.pages[key.slice(5)] : c[key])
+export const dirty = (c, key) => JSON.stringify(col(c, key).draft) !== JSON.stringify(col(c, key).published)
+const view = (c, which) => ({ site: c.site[which], nav: c.nav[which], theme: c.theme[which], portfolio: c.portfolio[which], team: c.team[which], clients: c.clients[which], contact: c.contact[which], pages: Object.fromEntries(PAGE_KEYS.map((k) => [k, c.pages[k][which]])) })
 
-/* ---------- labels ---------- */
-const L = {
-  en: { team: 'We are proud to be part of the Spero team', teamh: 'Our Team', contact: 'Get Contact', phone: 'Phone', mail: 'Email', addr: 'Address', clients: 'Clients', clientsh: 'Our Clients', clientsp: 'Institutions and companies that have worked with us.' },
-  id: { team: 'Kami bangga menjadi bagian dari tim Spero', teamh: 'Tim Kami', contact: 'Hubungi Kami', phone: 'Telepon', mail: 'Email', addr: 'Alamat', clients: 'Klien', clientsh: 'Klien Kami', clientsp: 'Instansi dan perusahaan yang pernah bekerja sama dengan kami.' },
+/* ---------- versions ---------- */
+const vdir = (key) => path.join(VERSIONS, key.replace(/[^\w-]/g, '_'))
+export function saveVersion(key, data, user, note = '') {
+  const d = vdir(key); fs.mkdirSync(d, { recursive: true })
+  const id = `${Date.now()}-${crypto.randomBytes(2).toString('hex')}`
+  fs.writeFileSync(path.join(d, id + '.json'), JSON.stringify({ id, ts: new Date().toISOString(), user: user?.username || 'system', key, note, data }))
+  const all = fs.readdirSync(d).filter((f) => f.endsWith('.json')).sort()
+  for (const f of all.slice(0, Math.max(0, all.length - 40))) fs.unlinkSync(path.join(d, f))   // keep latest 40
+  return id
 }
-const PAGES = { en: ['about/index.html', 'index.html', 'portfolio/index.html'], id: ['id/about/index.html', 'id/index.html', 'id/portfolio/index.html'] }
-
-/* ---------- block helper: replace <!--name-start-->…<!--name-end--> (or a legacy region the first time) ---------- */
-function setBlock(html, name, block, legacy) {
-  const wrapped = `<!--${name}-start-->${block}<!--${name}-end-->`
-  const re = new RegExp(`<!--${name}-start-->.*?<!--${name}-end-->`, 's')
-  if (re.test(html)) return html.replace(re, () => wrapped)
-  if (legacy && legacy.test(html)) return html.replace(legacy, () => wrapped)
-  return null
+export function listVersions(key) {
+  const d = vdir(key); if (!fs.existsSync(d)) return []
+  return fs.readdirSync(d).filter((f) => f.endsWith('.json')).sort().reverse().map((f) => { const v = JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')); return { id: v.id, ts: v.ts, user: v.user, note: v.note } })
 }
-
-/* ---------- generators ---------- */
-function teamHtml(l, items) {
-  const t = L[l]
-  return `<section class="section about-team"><div class="container"><div class="section-heading"><div><p class="eyebrow">${t.team}</p><h2>${t.teamh}</h2></div></div><div class="team-grid">`
-    + items.map((m) => `<article class="team-card"><img src="${e(m.photo)}" alt="Foto ${e(m.name)}" width="128" height="128" loading="lazy"/><h3>${e(m.name)}</h3><p>${e(m.role)}</p></article>`).join('')
-    + '</div></div></section>'
+export function getVersion(key, id) {
+  if (!/^[\w-]+$/.test(id)) return null
+  const f = path.join(vdir(key), id + '.json'); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null
 }
-const tel = (p) => 'tel:' + p.replace(/[^\d+]/g, '')
-function contactHtml(l, k) {
-  const t = L[l]
-  return `<section class="section about-contact"><div class="container split-section"><div><p class="eyebrow">${t.contact}</p><h2>PT. Spero Mahakarya Nusantara</h2></div><dl class="contact-list">`
-    + `<div><dt>${t.phone}</dt><dd>${(k.phones || []).map((p) => `<a href="${e(tel(p))}">${e(p)}</a>`).join('<br/>')}</dd></div>`
-    + `<div><dt>${t.mail}</dt><dd><a href="mailto:${e(k.email)}">${e(k.email)}</a></dd></div>`
-    + `<div><dt>${t.addr}</dt><dd>${String(k.address || '').split('\n').map(e).join('<br/>')}</dd></div></dl></div></section>`
+export function ensureBaselineVersions() {
+  const c = loadContent()
+  for (const key of COLLECTIONS) if (!listVersions(key).length) saveVersion(key, col(c, key).published, null, 'Versi awal')
 }
-function ini(n) { const w = n.split(/[\s\-.&]+/).filter(Boolean); return (w.length === 1 ? w[0].slice(0, 2) : w[0][0] + w[1][0]).toUpperCase() }
-function clientsHtml(l, names) {
-  const t = L[l], half = Math.ceil(names.length / 2)
-  const row = (lst, rev) => {
-    const li = lst.map((n) => `<li><span class="client-ini">${e(ini(n))}</span>${e(n)}</li>`).join('')
-    return `<div class="client-row" data-dir="${rev ? 'rtl' : 'ltr'}"><div class="client-track"><ul class="client-set">${li}</ul><ul class="client-set" aria-hidden="true">${li}</ul></div></div>`
+/** Short readable list of what differs between two JSON values. */
+export function diffSummary(a, b, max = 40) {
+  const out = []
+  const short = (v) => { const s = typeof v === 'string' ? v : JSON.stringify(v); return s == null ? '—' : s.length > 90 ? s.slice(0, 90) + '…' : s }
+  const walk = (x, y, p) => {
+    if (out.length >= max) return
+    if (JSON.stringify(x) === JSON.stringify(y)) return
+    const ox = x && typeof x === 'object', oy = y && typeof y === 'object'
+    if (ox && oy && Array.isArray(x) === Array.isArray(y)) {
+      const keys = new Set([...Object.keys(x), ...Object.keys(y)])
+      for (const k of keys) walk(x[k], y[k], p ? `${p} › ${k}` : k)
+    } else out.push({ path: p || '(isi)', before: short(x), after: short(y) })
   }
-  return `<section class="section clients-band" aria-label="${t.clientsh}"><div class="container clients-head"><div><p class="eyebrow">${t.clients}</p><h2>${t.clientsh}</h2></div><p>${t.clientsp}</p></div>`
-    + `<div class="client-marquee">${row(names.slice(0, half), false)}${row(names.slice(half), true)}</div></section>`
+  walk(a, b, ''); return out
 }
 
-function allHtmlFiles(dir = ROOT, out = []) {
-  for (const d of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (['node_modules', '.git', '_next', 'server', 'scripts', 'docs', 'data', 'images', 'admin'].includes(d.name)) continue
-    const f = path.join(dir, d.name)
-    if (d.isDirectory()) allHtmlFiles(f, out)
-    else if (d.name === 'index.html') out.push(f)
+/* ---------- build ---------- */
+const mkCtx = (c, store, lang, v, extra = {}) => ({ lang, v, c, store, ...extra })
+const writeFile = (rel, html) => { const f = path.join(ROOT, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, html) }
+const relFor = (urlPath) => path.posix.join(urlPath.replace(/^\//, ''), 'index.html')
+
+export function buildSite() {
+  const raw = loadContent(), c = view(raw, 'published'), store = loadStore()
+  const ig = c.contact.instagram
+  if (ig && store.account !== ig) { store.account = ig; saveStore(store) }
+  const css = themeCss(c.theme), themeV = crypto.createHash('md5').update(css).digest('hex').slice(0, 8), v = String(Date.now())
+  fs.writeFileSync(path.join(ROOT, 'theme.css'), css)
+  const items = publishedUpdates(store), out = { published: items.length, detail: 0, removed: 0, pages: 0 }
+  const keepDetail = { en: new Set(), id: new Set() }
+  for (const lang of ['en', 'id']) {
+    const ctx = mkCtx(c, store, lang, v, { themeV })
+    for (const k of PAGE_KEYS) { const p = renderPage(ctx, k); writeFile(relFor(p.path), p.html); out.pages++ }
+    // update detail pages share the Update page's contact band
+    const bandSec = c.pages.update.sections.find((s) => s.type === 'contact-band' && s.visible !== false)
+    const band = bandSec ? renderMain(ctx, { sections: [bandSec] }).html : ''
+    const t = T_UPDATES[lang]
+    for (const u of items) {
+      const main = renderUpdateDetail(lang, u, band)
+      const html = shell(ctx, { pageKey: 'update', enPath: `/update/${u.slug}`, title: `${u.title} | ${c.site.name}`, description: u.excerpt, ogImage: u.imageUrl, main })
+      writeFile(`${lang === 'id' ? 'id/' : ''}update/${u.slug}/index.html`, html); keepDetail[lang].add(u.slug); out.detail++
+    }
+    // remove detail folders of posts that are no longer published (only folders this builder generated)
+    const dir = path.join(ROOT, lang === 'id' ? 'id/update' : 'update')
+    if (fs.existsSync(dir)) for (const d of fs.readdirSync(dir, { withFileTypes: true })) {
+      const f = path.join(dir, d.name, 'index.html')
+      if (d.isDirectory() && !keepDetail[lang].has(d.name) && fs.existsSync(f) && fs.readFileSync(f, 'utf8').includes('data-update-detail')) { fs.rmSync(path.join(dir, d.name), { recursive: true }); out.removed++ }
+    }
+    void t
   }
   return out
 }
 
-export function buildSite() {
-  const c = loadContent(), team = c.team.published, clients = c.clients.published, k = c.contact.published
-  // keep the Instagram account used by the Update pages in step with Contact settings
-  const store = loadStore()
-  if (k.instagram && store.account !== k.instagram) { store.account = k.instagram; saveStore(store) }
-
-  for (const l of ['en', 'id']) for (const rel of PAGES[l]) {
-    const f = path.join(ROOT, rel); if (!fs.existsSync(f)) continue
-    let h = fs.readFileSync(f, 'utf8')
-    if (rel.endsWith('about/index.html')) {
-      // first run migrates the old unmarked sections into marker blocks
-      h = setBlock(h, 'team', teamHtml(l, team), /<section class="section about-team">.*?<\/section>/s) ?? h
-      h = setBlock(h, 'contactinfo', contactHtml(l, k), /<section class="section about-contact">.*?<\/section>/s) ?? h
-    } else if (h.includes('<!--clients-start-->')) {
-      h = setBlock(h, 'clients', clientsHtml(l, clients)) ?? h
-    }
-    fs.writeFileSync(f, h)
-  }
-  // contact email everywhere (links + visible address)
-  if (k.email) for (const f of allHtmlFiles()) {
-    const h = fs.readFileSync(f, 'utf8')
-    const n = h.replace(/mailto:[^"']+/g, () => `mailto:${e(k.email)}`).replace(/>[\w.+-]+@[\w-]+\.[\w.-]+</g, () => `>${e(k.email)}<`)
-    if (n !== h) fs.writeFileSync(f, n)
-  }
-  return buildUpdates()
+/** Preview of the DRAFT state (nothing is written). */
+export function previewPage(pageKey, lang) {
+  const raw = loadContent(), c = view(raw, 'draft'), store = loadStore()
+  if (!PAGE_KEYS.includes(pageKey)) return null
+  const ctx = mkCtx(c, store, lang === 'id' ? 'id' : 'en', String(Date.now()), { previewCss: themeCss(c.theme) })
+  return renderPage(ctx, pageKey).html.replace('</head>', `<style>${themeCss(c.theme)}</style><base target="_blank"></head>`)
 }
+void esc; void readEnv
